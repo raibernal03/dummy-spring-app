@@ -74,8 +74,8 @@ pipeline {
         stage('Stage - Deploy') {
             steps {
                 script {
-                    if (env.IS_DEPLOY == "true") {
-                        echo "Deploying artifact"
+                    if (env.IS_DEPLOY_PROD == "true") {
+                        echo "Deploying production artifact"
                     } else if (env.IS_DEPLOY_NONPROD == "true") {
                         echo "Deploying non-production artifact"
                     } else {
