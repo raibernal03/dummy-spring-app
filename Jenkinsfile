@@ -90,6 +90,11 @@ pipeline {
                 echo "Current branch is: ${env.BRANCH_NAME}"
             }
         }
+        stage('Stage - Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
     }
 }
 
