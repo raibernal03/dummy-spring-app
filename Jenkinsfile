@@ -1,4 +1,5 @@
 
+
 pipeline {
     agent any
 
@@ -62,9 +63,29 @@ pipeline {
         stage('Stage - Package') {
             steps {
                 script {
+                    def appName = "dummy-spring-app"
+                    def buildNumber = env.BUILD_NUMBER
+                    def branchName = env.BRANCH_NAME.trim()
+
+                    def artifactName = ""
+                    if (branchName.startsWith("feature/")) {
+                        def feature = branchName.substring(branchName.lastIndexOf("/") + 1)
+                        artifactName = "${appName}-${feature}-${buildNumber}.jar"
+                    }else if (branchName == "develop") {
+                        artifactName = "${appName}-develop-${buildNumber}-SNAPSHOT.jar"
+                    }else if (branchName.startsWith("release/")) {
+                        def version = branchName.substring(branchName.lastIndexOf("/") + 1)
+                        artifactName = "${appName}-${version}-RC${buildNumber}.jar"
+                    }else if (branchName == "main") {
+                        artifactName = "${appName}-${buildNumber}.jar"
+                    }
+
+                    env.ARTIFACT_NAME = artifactName
+
                     if (env.IS_PACKAGE == "true") {
                         echo "Packaging artifact"
-                        sh "${tool 'MAVEN3'}/bin/mvn package"
+                        sh "cp target/*.jar target/${env.ARTIFACT_NAME}"
+                        //sh "${tool 'MAVEN3'}/bin/mvn package"
                     } else {
                         echo "Skipping packaging"
                     }
@@ -96,8 +117,7 @@ pipeline {
                 script{
                     if(env.IS_PACKAGE == "true") {
                         echo "Archiving artifact"
-                        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-
+                        archiveArtifacts artifacts: "target/${env.ARTIFACT_NAME}", fingerprint: true
                     } else {
                         echo "No artifact to archive"
                     }
