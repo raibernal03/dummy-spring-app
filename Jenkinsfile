@@ -58,23 +58,24 @@ pipeline {
 
         stage('Stage - Package') {
             steps {
-                if(package) {
-                    echo "Packaging and deploying artifact"
-                    sh "${tool 'MAVEN3'}/bin/mvn package"
-                } else {
-                    echo "Skipping packaging and deployment"
-                    return
+                script {
+                    if (env.IS_PACKAGE == "true") {
+                        echo "Packaging artifact"
+                        sh "${tool 'MAVEN3'}/bin/mvn package"
+                    } else {
+                        echo "Skipping packaging"
+                    }
                 }
             }
         }
         stage('Stage - Deploy') {
             steps {
-                if(deploy) {
-                    echo "Deploying artifact"
-                    // Deployment logic here
-                } else {
-                    echo "Skipping deployment"
-                    return
+                script {
+                    if (env.IS_DEPLOY == "true") {
+                        echo "Deploying artifact"
+                    } else {
+                        echo "Skipping deployment"
+                    }
                 }
             }
         }
