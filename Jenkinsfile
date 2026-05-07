@@ -40,7 +40,7 @@ pipeline {
                     echo "FEATURE branch build (build only)"
                    env.IS_DEPLOY_NONPROD = "false"
                     env.IS_DEPLOY_PROD = "false"
-                    env.IS_PACKAGE = "true"
+                    env.IS_PACKAGE = "false"
                 }
 
                 echo "Image tag prefix = ${env.IMAGE_TAG_PREFIX}"
@@ -88,6 +88,11 @@ pipeline {
         stage('Stage - Branch Info') {
             steps {
                 echo "Current branch is: ${env.BRANCH_NAME}"
+            }
+        }
+        stage('Stage - Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
     }
