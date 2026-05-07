@@ -25,19 +25,22 @@ pipeline {
                 env.IMAGE_TAG_PREFIX = imageTagPrefix
 
                 if (branchName == 'main' || branchName.startsWith('release/')) {
-                    echo "PRODUCTION artifact build"
-                    env.IS_DEPLOY = "true"
+                    echo "Non-production artifact build"
+                    env.IS_DEPLOY_NONPROD = "false"
+                    env.IS_DEPLOY_PROD = "true"
                     env.IS_PACKAGE = "true"
                 }
                 else if (branchName.startsWith('develop')) {
                     echo "DEVELOPMENT artifact build"
-                    env.IS_DEPLOY = "false"
+                    env.IS_DEPLOY_NONPROD = "true"
+                    env.IS_DEPLOY_PROD = "false"
                     env.IS_PACKAGE = "true"
                 }
                 else if (branchName.startsWith('feature/')) {
                     echo "FEATURE branch build (build only)"
-                    env.IS_DEPLOY = "false"
-                    env.IS_PACKAGE = "false"
+                   env.IS_DEPLOY_NONPROD = "false"
+                    env.IS_DEPLOY_PROD = "false"
+                    env.IS_PACKAGE = "true"
                 }
 
                 echo "Image tag prefix = ${env.IMAGE_TAG_PREFIX}"
@@ -73,6 +76,8 @@ pipeline {
                 script {
                     if (env.IS_DEPLOY == "true") {
                         echo "Deploying artifact"
+                    } else if (env.IS_DEPLOY_NONPROD == "true") {
+                        echo "Deploying non-production artifact"
                     } else {
                         echo "Skipping deployment"
                     }
