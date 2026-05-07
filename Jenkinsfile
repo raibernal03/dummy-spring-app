@@ -8,41 +8,42 @@ pipeline {
 
     stages {
         stage('Stage - Branch Logic') {
-            steps {
-                script {
-                    def branchName = env.BRANCH_NAME.trim()
-                    def imageTagPrefix = ""
-                    def package = true
-                    def deploy = true
+        steps {
+            script {
 
-                    // Generate feature image tag prefix
-                    if (branchName.contains('/')) {
-                        imageTagPrefix = branchName.substring(
-                            branchName.lastIndexOf('/') + 1,
-                            branchName.length()
-                        )
-                    } else {
-                        imageTagPrefix = branchName
-                    }
+                def branchName = env.BRANCH_NAME.trim()
+                def imageTagPrefix = ""
 
-                    // Decide artifact type (VISIBLE OUTPUT NOW)
-                    if (env.BRANCH_NAME == 'main' || branchName.startsWith('release/')) {
-                        echo "PRODUCTION artifact build"
-                    }
-                    else if (branchName.startsWith('develop')) {
-                        echo "DEVELOPMENT artifact build"
-                    }
-                    else if (branchName.startsWith('feature/')) {
-                        echo "FEATURE branch build (build only)"
-                        package = false
-                        deploy = false
-                    }
-
-                    echo "Image tag prefix = ${imageTagPrefix}"
+                if (branchName.contains('/')) {
+                    imageTagPrefix = branchName.substring(
+                        branchName.lastIndexOf('/') + 1
+                    )
+                } else {
+                    imageTagPrefix = branchName
                 }
+
+                env.IMAGE_TAG_PREFIX = imageTagPrefix
+
+                if (branchName == 'main' || branchName.startsWith('release/')) {
+                    echo "PRODUCTION artifact build"
+                    env.IS_DEPLOY = "true"
+                    env.IS_PACKAGE = "true"
+                }
+                else if (branchName.startsWith('develop')) {
+                    echo "DEVELOPMENT artifact build"
+                    env.IS_DEPLOY = "false"
+                    env.IS_PACKAGE = "true"
+                }
+                else if (branchName.startsWith('feature/')) {
+                    echo "FEATURE branch build (build only)"
+                    env.IS_DEPLOY = "false"
+                    env.IS_PACKAGE = "false"
+                }
+
+                echo "Image tag prefix = ${env.IMAGE_TAG_PREFIX}"
             }
         }
-
+}
         stage('Stage - Build') {
             steps {
                 sh "${tool 'MAVEN3'}/bin/mvn clean compile"
