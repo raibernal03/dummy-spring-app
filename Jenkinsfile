@@ -91,8 +91,15 @@ pipeline {
             }
         }
         stage('Stage - Archive Artifact') {
+            
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                if(env.IS_PACKAGE == "true") {
+                    echo "Archiving artifact"
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+
+                } else {
+                    echo "No artifact to archive"
+                }
             }
         }
     }
