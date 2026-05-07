@@ -12,6 +12,8 @@ pipeline {
                 script {
                     def branchName = env.BRANCH_NAME.trim()
                     def imageTagPrefix = ""
+                    def package = true
+                    def deploy = true
 
                     // Generate feature image tag prefix
                     if (branchName.contains('/')) {
@@ -32,6 +34,8 @@ pipeline {
                     }
                     else if (branchName.startsWith('feature/')) {
                         echo "FEATURE branch build (build only)"
+                        package = false
+                        deploy = false
                     }
 
                     echo "Image tag prefix = ${imageTagPrefix}"
@@ -53,7 +57,24 @@ pipeline {
 
         stage('Stage - Package') {
             steps {
-                sh "${tool 'MAVEN3'}/bin/mvn package"
+                if(package) {
+                    echo "Packaging and deploying artifact"
+                    sh "${tool 'MAVEN3'}/bin/mvn package"
+                } else {
+                    echo "Skipping packaging and deployment"
+                    return
+                }
+            }
+        }
+        stage('Stage - Deploy') {
+            steps {
+                if(deploy) {
+                    echo "Deploying artifact"
+                    // Deployment logic here
+                } else {
+                    echo "Skipping deployment"
+                    return
+                }
             }
         }
 
