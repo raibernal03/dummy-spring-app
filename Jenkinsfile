@@ -7,25 +7,25 @@ pipeline {
 
     stages {
 
-        stage('Build') {
+        stage('Stage - Build') {
             steps {
                 sh "${tool 'MAVEN3'}/bin/mvn clean compile"
             }
         }
 
-        stage('Test') {
+        stage('Stage - Test') {
             steps {
                 sh "${tool 'MAVEN3'}/bin/mvn test"
             }
         }
 
-        stage('Package') {
+        stage('Stage - Package') {
             steps {
                 sh "${tool 'MAVEN3'}/bin/mvn package"
             }
         }
 
-        stage('Branch Info') {
+        stage('Stage - Branch Info') {
             steps {
                 echo "Current branch is: ${env.BRANCH_NAME}"
             }
