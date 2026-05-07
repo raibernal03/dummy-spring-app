@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('Step - SCM') {
             steps {
-                git branch: 'develop',
+                git branch: 'main',
                         url: 'https://github.com/raibernal03/dummy-spring-app.git'
             }
         }
