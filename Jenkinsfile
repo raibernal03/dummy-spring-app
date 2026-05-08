@@ -50,7 +50,7 @@ pipeline {
 }
         stage('Stage - Build') {
             steps {
-                sh "${tool 'MAVEN3'}/bin/mvn clean compile"
+                sh "${tool 'MAVEN3'}/bin/mvn clean compile "
             }
         }
 
@@ -63,32 +63,39 @@ pipeline {
         stage('Stage - Package') {
             steps {
                 script {
-                    def appName = "dummy-spring-app"
+                    def appName = "myapp"
                     def buildNumber = env.BUILD_NUMBER
                     def branchName = env.BRANCH_NAME.trim()
-
                     def artifactName = ""
+
+                    // Maven build (correct lifecycle)
+                    sh "${tool 'MAVEN3'}/bin/mvn clean package"
+
+                    // Find actual jar produced
+                    def jarFile = sh(
+                        script: "ls target/*.jar | grep -v original",
+                        returnStdout: true
+                    ).trim()
+
                     if (branchName.startsWith("feature/")) {
-                        def feature = branchName.substring(branchName.lastIndexOf("/") + 1)
+                        def feature = branchName.tokenize("/").last()
                         artifactName = "${appName}-${feature}-${buildNumber}.jar"
-                    }else if (branchName == "develop") {
+                    }
+                    else if (branchName == "develop") {
                         artifactName = "${appName}-develop-${buildNumber}-SNAPSHOT.jar"
-                    }else if (branchName.startsWith("release/")) {
-                        def version = branchName.substring(branchName.lastIndexOf("/") + 1)
+                    }
+                    else if (branchName.startsWith("release/")) {
+                        def version = branchName.tokenize("/").last()
                         artifactName = "${appName}-${version}-RC${buildNumber}.jar"
-                    }else if (branchName == "main") {
+                    }
+                    else {
                         artifactName = "${appName}-${buildNumber}.jar"
                     }
 
                     env.ARTIFACT_NAME = artifactName
 
-                    if (env.IS_PACKAGE == "true") {
-                        echo "Packaging artifact"
-                        sh "cp target/*.jar target/${env.ARTIFACT_NAME}"
-                        //sh "${tool 'MAVEN3'}/bin/mvn package"
-                    } else {
-                        echo "Skipping packaging"
-                    }
+                    echo "Renaming ${jarFile} → ${artifactName}"
+                    sh "cp ${jarFile} target/${artifactName}"
                 }
             }
         }
