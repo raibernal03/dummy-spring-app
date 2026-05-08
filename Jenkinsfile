@@ -100,31 +100,16 @@ pipeline {
         stage('Stage - Docker Build & Push') {
             steps {
                 script {
-                   /*  def dockerUser = 'YOUR_DOCKERHUB_USERNAME'
-                    def imageTag = env.ARTIFACT_NAME.replace('.jar', '')
-
-                    def fullImageName = "${dockerUser}/myapp:${imageTag}"
-
-                    echo "Building Docker image: ${fullImageName}"
-
-                    sh "docker build -t ${fullImageName} ."
-
-                    echo 'Logging into Docker Hub'
-
-                    withCredentials([usernamePassword(
-                credentialsId: 'dockerhub-creds',
-                usernameVariable: 'DOCKER_USER',
-                passwordVariable: 'DOCKER_PASS'
-            )]) {
-                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                        sh "docker push ${fullImageName}"
-            }
-
-                    env.DOCKER_IMAGE = fullImageName */
-                    sh "docker version"
+                        if (branchName.startsWith('feature/')) {
+                            sh "echo 'Skipping Docker build for feature branch'"
+                        }
+                        else if (branchName == 'develop' || branchName.startsWith('release/' || branchName == 'main')) {
+                            sh "docker version"
+                        }
                 }
             }
         }
+    }
         stage('Stage - Deploy') {
             steps {
                 script {
@@ -169,7 +154,7 @@ pipeline {
                 }
             }
         }
-    }
+}
 }
 
 // feature/* → "Build only"
