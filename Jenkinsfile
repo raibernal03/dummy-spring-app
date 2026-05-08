@@ -4,6 +4,7 @@ pipeline {
 
     tools {
         maven 'MAVEN3'
+        docker 'DOCKER1'
     }
 
     stages {
@@ -100,12 +101,14 @@ pipeline {
         stage('Stage - Docker Build & Push') {
             steps {
                 script {
-                        if (branchName.startsWith('feature/')) {
-                            sh "echo 'Skipping Docker build for feature branch'"
-                        }
-                        else if (branchName == 'develop' || branchName.startsWith('release/' || branchName == 'main')) {
-                            sh "docker version"
-                        }
+                    def branchName = env.BRANCH_NAME.trim()
+                    
+                    if (branchName.startsWith('feature/')) {
+                        sh "echo 'Skipping Docker build for feature branch'"
+                    }
+                    else if (branchName == 'develop' || branchName.startsWith('release/' || branchName == 'main')) {
+                        sh "docker version"
+                    }
                 }
             }
         }
