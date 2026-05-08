@@ -61,7 +61,7 @@ pipeline {
         stage('Stage - Package') {
             steps {
                 script {
-                    def appName = 'myapp'
+                    def appName = 'dummy-spring-app'
                     def buildNumber = env.BUILD_NUMBER
                     def branchName = env.BRANCH_NAME.trim()
                     def artifactName = ''
@@ -100,12 +100,14 @@ pipeline {
         stage('Stage - Docker Build & Push') {
             steps {
                 script {
-                        if (branchName.startsWith('feature/')) {
-                            sh "echo 'Skipping Docker build for feature branch'"
-                        }
-                        else if (branchName == 'develop' || branchName.startsWith('release/' || branchName == 'main')) {
-                            sh "docker version"
-                        }
+                    def branchName = env.BRANCH_NAME.trim()
+
+                    if (branchName.startsWith('feature/')) {
+                        sh "echo 'Skipping Docker build for feature branch'"
+                    }
+                    else if (branchName == 'develop' || branchName.startsWith('release/' || branchName == 'main')) {
+                        sh "docker version"
+                    }
                 }
             }
         }
@@ -156,8 +158,6 @@ pipeline {
         }
     }
 }
-
-
 // feature/* → "Build only"
 // develop → "Dev artifact"
 // main → "Production artifact"
