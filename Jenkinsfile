@@ -61,7 +61,7 @@ pipeline {
         stage('Stage - Package') {
             steps {
                 script {
-                    def appName = 'myapp'
+                    def appName = 'dummy-spring-app'
                     def buildNumber = env.BUILD_NUMBER
                     def branchName = env.BRANCH_NAME.trim()
                     def artifactName = ''
@@ -156,8 +156,6 @@ pipeline {
         }
     }
 }
-
-
 // feature/* → "Build only"
 // develop → "Dev artifact"
 // main → "Production artifact"
