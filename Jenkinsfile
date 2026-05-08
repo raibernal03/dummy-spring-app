@@ -63,20 +63,39 @@ pipeline {
         stage('Stage - Package') {
             steps {
                 script {
+                    def appName = "myapp"
+                    def buildNumber = env.BUILD_NUMBER
+                    def branchName = env.BRANCH_NAME.trim()
+                    def artifactName = ""
 
-                    if (env.IS_PACKAGE == "true") {
+                    // Maven build (correct lifecycle)
+                    sh "${tool 'MAVEN3'}/bin/mvn clean package"
 
-                        echo "Building artifact via Maven package"
-                        sh "${tool 'MAVEN3'}/bin/mvn clean package"
+                    // Find actual jar produced
+                    def jarFile = sh(
+                        script: "ls target/*.jar | grep -v original",
+                        returnStdout: true
+                    ).trim()
 
-                        def jarFile = "target/dummy-spring-app.jar"
-
-                        echo "Renaming artifact to ${env.ARTIFACT_NAME}"
-                        sh "cp ${jarFile} target/${env.ARTIFACT_NAME}"
-
-                    } else {
-                        echo "Skipping packaging"
+                    if (branchName.startsWith("feature/")) {
+                        def feature = branchName.tokenize("/").last()
+                        artifactName = "${appName}-${feature}-${buildNumber}.jar"
                     }
+                    else if (branchName == "develop") {
+                        artifactName = "${appName}-develop-${buildNumber}-SNAPSHOT.jar"
+                    }
+                    else if (branchName.startsWith("release/")) {
+                        def version = branchName.tokenize("/").last()
+                        artifactName = "${appName}-${version}-RC${buildNumber}.jar"
+                    }
+                    else {
+                        artifactName = "${appName}-${buildNumber}.jar"
+                    }
+
+                    env.ARTIFACT_NAME = artifactName
+
+                    echo "Renaming ${jarFile} → ${artifactName}"
+                    sh "cp ${jarFile} target/${artifactName}"
                 }
             }
         }
