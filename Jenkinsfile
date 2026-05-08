@@ -97,7 +97,7 @@ pipeline {
                 }
             }
         }
-        stage('Docker Build & Push') {
+        stage('Stage - Docker Build & Push') {
             steps {
                 script {
                    /*  def dockerUser = 'YOUR_DOCKERHUB_USERNAME'
