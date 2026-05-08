@@ -4,7 +4,6 @@ pipeline {
 
     tools {
         maven 'MAVEN3'
-        docker 'DOCKER1'
     }
 
     stages {
@@ -102,7 +101,7 @@ pipeline {
             steps {
                 script {
                     def branchName = env.BRANCH_NAME.trim()
-                    
+
                     if (branchName.startsWith('feature/')) {
                         sh "echo 'Skipping Docker build for feature branch'"
                     }
