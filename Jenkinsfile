@@ -16,8 +16,8 @@ pipeline {
                     if (branchName.contains('/')) {
                         imageTagPrefix = branchName.substring(
                         branchName.lastIndexOf('/') + 1
-                    )
-                } else {
+                    )}
+                    else {
                         imageTagPrefix = branchName
                     }
 
@@ -29,20 +29,20 @@ pipeline {
                         env.IS_DEPLOY_PROD = 'true'
                         env.IS_PACKAGE = 'true'
                     }
-                else if (branchName.startsWith('develop')) {
-                        echo 'DEVELOPMENT artifact build'
-                        env.IS_DEPLOY_NONPROD = 'true'
-                        env.IS_DEPLOY_PROD = 'false'
-                        env.IS_PACKAGE = 'true'
-                }
-                else if (branchName.startsWith('feature/')) {
-                        echo 'FEATURE branch build (build only)'
-                        env.IS_DEPLOY_NONPROD = 'false'
-                        env.IS_DEPLOY_PROD = 'false'
-                        env.IS_PACKAGE = 'false'
-                }
+                    else if (branchName.startsWith('develop')) {
+                            echo 'DEVELOPMENT artifact build'
+                            env.IS_DEPLOY_NONPROD = 'true'
+                            env.IS_DEPLOY_PROD = 'false'
+                            env.IS_PACKAGE = 'true'
+                    }
+                    else if (branchName.startsWith('feature/')) {
+                            echo 'FEATURE branch build (build only)'
+                            env.IS_DEPLOY_NONPROD = 'false'
+                            env.IS_DEPLOY_PROD = 'false'
+                            env.IS_PACKAGE = 'false'
+                    }
 
-                    echo "Image tag prefix = ${env.IMAGE_TAG_PREFIX}"
+                        echo "Image tag prefix = ${env.IMAGE_TAG_PREFIX}"
                 }
             }
         }
@@ -97,6 +97,15 @@ pipeline {
                 }
             }
         }
+        stage('Check Docker') {
+            steps {
+                sh '''
+            echo $PATH
+            which docker || echo "NO DOCKER"
+            docker version || echo "NO ACCESS"
+        '''
+            }
+        }
         stage('Stage - Docker Build & Push') {
             steps {
                 script {
@@ -105,13 +114,13 @@ pipeline {
                     if (branchName.startsWith('feature/')) {
                         sh "echo 'Skipping Docker build for feature branch'"
                     }
-                    else if (branchName == 'develop' || branchName.startsWith('release/' || branchName == 'main')) {
-                        sh "docker version"
+                    else if (branchName == 'develop' || branchName.startsWith('release/') || branchName == 'main') {
+                        sh 'docker version'
                     }
                 }
             }
         }
-    
+
         stage('Stage - Deploy') {
             steps {
                 script {
