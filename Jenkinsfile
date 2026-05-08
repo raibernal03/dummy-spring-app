@@ -109,7 +109,7 @@ pipeline {
                 }
             }
         }
-    }
+    
         stage('Stage - Deploy') {
             steps {
                 script {
@@ -154,8 +154,9 @@ pipeline {
                 }
             }
         }
+    }
 }
-}
+
 
 // feature/* → "Build only"
 // develop → "Dev artifact"
