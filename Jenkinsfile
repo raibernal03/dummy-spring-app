@@ -1,5 +1,4 @@
 
-
 pipeline {
     agent any
 
@@ -9,45 +8,44 @@ pipeline {
 
     stages {
         stage('Stage - Branch Logic') {
-        steps {
-            script {
+            steps {
+                script {
+                    def branchName = env.BRANCH_NAME.trim()
+                    def imageTagPrefix = ''
 
-                def branchName = env.BRANCH_NAME.trim()
-                def imageTagPrefix = ""
-
-                if (branchName.contains('/')) {
-                    imageTagPrefix = branchName.substring(
+                    if (branchName.contains('/')) {
+                        imageTagPrefix = branchName.substring(
                         branchName.lastIndexOf('/') + 1
                     )
                 } else {
-                    imageTagPrefix = branchName
-                }
+                        imageTagPrefix = branchName
+                    }
 
-                env.IMAGE_TAG_PREFIX = imageTagPrefix
+                    env.IMAGE_TAG_PREFIX = imageTagPrefix
 
-                if (branchName == 'main' || branchName.startsWith('release/')) {
-                    echo "Non-production artifact build"
-                    env.IS_DEPLOY_NONPROD = "false"
-                    env.IS_DEPLOY_PROD = "true"
-                    env.IS_PACKAGE = "true"
-                }
+                    if (branchName == 'main' || branchName.startsWith('release/')) {
+                        echo 'Non-production artifact build'
+                        env.IS_DEPLOY_NONPROD = 'false'
+                        env.IS_DEPLOY_PROD = 'true'
+                        env.IS_PACKAGE = 'true'
+                    }
                 else if (branchName.startsWith('develop')) {
-                    echo "DEVELOPMENT artifact build"
-                    env.IS_DEPLOY_NONPROD = "true"
-                    env.IS_DEPLOY_PROD = "false"
-                    env.IS_PACKAGE = "true"
+                        echo 'DEVELOPMENT artifact build'
+                        env.IS_DEPLOY_NONPROD = 'true'
+                        env.IS_DEPLOY_PROD = 'false'
+                        env.IS_PACKAGE = 'true'
                 }
                 else if (branchName.startsWith('feature/')) {
-                    echo "FEATURE branch build (build only)"
-                   env.IS_DEPLOY_NONPROD = "false"
-                    env.IS_DEPLOY_PROD = "false"
-                    env.IS_PACKAGE = "false"
+                        echo 'FEATURE branch build (build only)'
+                        env.IS_DEPLOY_NONPROD = 'false'
+                        env.IS_DEPLOY_PROD = 'false'
+                        env.IS_PACKAGE = 'false'
                 }
 
-                echo "Image tag prefix = ${env.IMAGE_TAG_PREFIX}"
+                    echo "Image tag prefix = ${env.IMAGE_TAG_PREFIX}"
+                }
             }
         }
-}
         stage('Stage - Build') {
             steps {
                 sh "${tool 'MAVEN3'}/bin/mvn clean compile "
@@ -63,29 +61,29 @@ pipeline {
         stage('Stage - Package') {
             steps {
                 script {
-                    def appName = "myapp"
+                    def appName = 'myapp'
                     def buildNumber = env.BUILD_NUMBER
                     def branchName = env.BRANCH_NAME.trim()
-                    def artifactName = ""
+                    def artifactName = ''
 
                     // Maven build (correct lifecycle)
                     sh "${tool 'MAVEN3'}/bin/mvn clean package"
 
                     // Find actual jar produced
                     def jarFile = sh(
-                        script: "ls target/*.jar | grep -v original",
+                        script: 'ls target/*.jar | grep -v original',
                         returnStdout: true
                     ).trim()
 
-                    if (branchName.startsWith("feature/")) {
-                        def feature = branchName.tokenize("/").last()
+                    if (branchName.startsWith('feature/')) {
+                        def feature = branchName.tokenize('/').last()
                         artifactName = "${appName}-${feature}-${buildNumber}.jar"
                     }
-                    else if (branchName == "develop") {
+                    else if (branchName == 'develop') {
                         artifactName = "${appName}-develop-${buildNumber}-SNAPSHOT.jar"
                     }
-                    else if (branchName.startsWith("release/")) {
-                        def version = branchName.tokenize("/").last()
+                    else if (branchName.startsWith('release/')) {
+                        def version = branchName.tokenize('/').last()
                         artifactName = "${appName}-${version}-RC${buildNumber}.jar"
                     }
                     else {
@@ -99,15 +97,28 @@ pipeline {
                 }
             }
         }
+        stage('Stage - Docker Build & Push') {
+            steps {
+                script {
+                        if (branchName.startsWith('feature/')) {
+                            sh "echo 'Skipping Docker build for feature branch'"
+                        }
+                        else if (branchName == 'develop' || branchName.startsWith('release/' || branchName == 'main')) {
+                            sh "docker version"
+                        }
+                }
+            }
+        }
+    }
         stage('Stage - Deploy') {
             steps {
                 script {
-                    if (env.IS_DEPLOY_PROD == "true") {
-                        echo "Deploying production artifact"
-                    } else if (env.IS_DEPLOY_NONPROD == "true") {
-                        echo "Deploying non-production artifact"
+                    if (env.IS_DEPLOY_PROD == 'true') {
+                        echo 'Deploying production artifact'
+                    } else if (env.IS_DEPLOY_NONPROD == 'true') {
+                        echo 'Deploying non-production artifact'
                     } else {
-                        echo "Skipping deployment"
+                        echo 'Skipping deployment'
                     }
                 }
             }
@@ -119,19 +130,31 @@ pipeline {
             }
         }
         stage('Stage - Archive Artifact') {
-            
             steps {
-                script{
-                    if(env.IS_PACKAGE == "true") {
-                        echo "Archiving artifact"
+                script {
+                    if (env.IS_PACKAGE == 'true') {
+                        echo 'Archiving artifact'
                         archiveArtifacts artifacts: "target/${env.ARTIFACT_NAME}", fingerprint: true
                     } else {
-                        echo "No artifact to archive"
+                        echo 'No artifact to archive'
                     }
                 }
             }
         }
-    }
+        stage('Docker Build') {
+            steps {
+                script {
+                    echo 'Building Docker image...'
+
+                    def imageTag = env.ARTIFACT_NAME.replace('.jar', '')
+
+                    echo "Docker tag will be: ${imageTag}"
+
+                // next step: docker build command goes here
+                }
+            }
+        }
+}
 }
 
 // feature/* → "Build only"
